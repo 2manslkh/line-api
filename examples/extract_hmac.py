@@ -2,81 +2,57 @@
 """
 Extract HMAC implementation from LINE Chrome extension source.
 
-Run from the extension directory:
+Usage:
     cd "/Users/kenk/Library/Application Support/BraveSoftware/Brave-Browser/Profile 24/Extensions/ophjlpahpchlmihnnnihgmmeilfjmjjc/3.7.1_0"
-    python3 ~/path/to/extract_hmac.py
+    python3 ~/line-api/examples/extract_hmac.py
 """
 
 import re
 import os
+import glob
 
-JS_FILES = [
-    "static/js/main.js",
-    "static/js/ltsmSandbox.js",
-    "static/js/cropperSandbox.js",
-]
-
-
-def extract_around(content, pattern, before=300, after=800, max_matches=5):
-    results = []
-    for m in re.finditer(pattern, content):
-        start = max(0, m.start() - before)
-        end = min(len(content), m.end() + after)
-        results.append((m.start(), content[start:end]))
-        if len(results) >= max_matches:
-            break
-    return results
-
+def search_file(filepath, patterns):
+    try:
+        content = open(filepath, encoding='utf-8', errors='ignore').read()
+    except:
+        return
+    
+    fname = os.path.basename(filepath)
+    for label, pattern in patterns:
+        for m in re.finditer(pattern, content):
+            start = max(0, m.start() - 300)
+            end = min(len(content), m.end() + 600)
+            snippet = content[start:end]
+            print(f"\n{'='*60}")
+            print(f"[{fname} @ {m.start()}] {label}")
+            print(f"{'='*60}")
+            print(snippet)
+            print()
 
 def main():
-    for js_file in JS_FILES:
-        if not os.path.exists(js_file):
-            continue
-
-        print(f"\n{'='*60}")
-        print(f"FILE: {js_file}")
-        print(f"{'='*60}")
-
-        content = open(js_file).read()
-
-        # 1. Find getHmac implementation
-        print(f"\n--- getHmac implementation ---")
-        for offset, text in extract_around(content, r'getHmac', before=300, after=500, max_matches=3):
-            print(f"\n[offset {offset}]")
-            print(text)
-            print()
-
-        # 2. Find HKDF key derivation
-        print(f"\n--- HKDF derivation ---")
-        for offset, text in extract_around(content, r'HKDF', before=100, after=800, max_matches=3):
-            print(f"\n[offset {offset}]")
-            print(text)
-            print()
-
-        # 3. Find the async key derivation functions (vL, ME, or similar)
-        print(f"\n--- async key derivation (deriveBits) ---")
-        for offset, text in extract_around(content, r'deriveBits', before=200, after=400, max_matches=3):
-            print(f"\n[offset {offset}]")
-            print(text)
-            print()
-
-        # 4. Find HMAC-SHA256 signing
-        print(f"\n--- crypto.subtle.sign ---")
-        for offset, text in extract_around(content, r'crypto\.subtle\.sign\b', before=200, after=400, max_matches=3):
-            print(f"\n[offset {offset}]")
-            print(text)
-            print()
-
-        # 5. Find where X-Hmac header is set (the interceptor)
-        print(f"\n--- X-Hmac header assignment ---")
-        for offset, text in extract_around(content, r'X-Hmac', before=500, after=200, max_matches=3):
-            print(f"\n[offset {offset}]")
-            print(text)
-            print()
-
-        # Only process main.js (most complete)
-        break
-
+    patterns = [
+        ("HMAC header set", r'X-Hmac'),
+        ("getHmac function", r'getHmac\s*[\(\{]'),
+        ("getHmac definition", r'getHmac\s*:'),
+        ("HKDF import", r'"HKDF"'),
+        ("sign function", r'crypto\.subtle\.sign\('),
+        ("importKey HMAC", r'importKey\([^)]*HMAC'),
+        ("hmac key derive", r'macKey'),
+    ]
+    
+    # Find all JS files
+    js_files = glob.glob("static/js/*.js") + glob.glob("*.js") + glob.glob("js/*.js")
+    
+    if not js_files:
+        print("No JS files found! Make sure you're in the extension directory.")
+        print(f"Current dir: {os.getcwd()}")
+        print(f"Files here: {os.listdir('.')[:20]}")
+        return
+    
+    print(f"Scanning {len(js_files)} files...")
+    
+    for f in sorted(js_files):
+        search_file(f, patterns)
 
 if __name__ == "__main__":
     main()
