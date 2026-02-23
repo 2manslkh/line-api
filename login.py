@@ -53,9 +53,11 @@ def get_signer():
         return HmacSigner(mode="subprocess")
 
 
-def post_json(signer, path, data, token="", extra_headers=None, timeout=10):
+def post_json(signer, path, data, token="", extra_headers=None, timeout=10, no_origin=False):
     body = json.dumps(data)
     headers = {**HEADERS, "X-Hmac": signer.sign(token, path, body)}
+    if no_origin:
+        headers.pop("origin", None)
     if token:
         headers["x-line-access"] = token
     if extra_headers:
@@ -162,7 +164,8 @@ def main():
                                   "X-Line-Session-ID": session_id,
                                   "Referer": "",
                               },
-                              timeout=20)
+                              timeout=160,
+                              no_origin=True)
                 elapsed = time.time() - t0
                 resp = r.json()
                 print(f"\n  Poll [{i+1}] ({elapsed:.1f}s): {json.dumps(resp)[:200]}")
@@ -208,14 +211,19 @@ def main():
     cert_file = CACHE_DIR / "sqr_cert"
     cert = cert_file.read_text().strip() if cert_file.exists() else None
 
+    need_pin = True
     if cert:
         print(f"Trying verifyCertificate with saved cert...")
         r = post_json(signer, "/api/talk/thrift/LoginQrCode/SecondaryQrCodeLoginService/verifyCertificate",
                       [{"authSessionId": session_id, "certificate": cert}])
         resp = r.json()
         print(f"  verifyCertificate: {json.dumps(resp)[:200]}")
-    else:
-        print("No saved certificate. Creating PIN...")
+        if resp.get("code") == 0:
+            need_pin = False
+            print("✓ Certificate verified!")
+
+    if need_pin:
+        print("Creating PIN...")
         r = post_json(signer, "/api/talk/thrift/LoginQrCode/SecondaryQrCodeLoginService/createPinCode",
                       [{"authSessionId": session_id}])
         resp = r.json()
@@ -225,22 +233,25 @@ def main():
             print(f"\n{'=' * 50}")
             print(f"  Enter this PIN on your phone:  {pin}")
             print(f"{'=' * 50}\n")
-            # Wait for PIN verification
+            # Wait for PIN verification (no origin, like Chrome ext)
             pin_poll = "/api/talk/thrift/LoginQrCode/SecondaryQrCodeLoginPermitNoticeService/checkPinCodeVerified"
-            for i in range(30):
+            for i in range(10):
                 try:
                     r = post_json(signer, pin_poll,
                                   [{"authSessionId": session_id}],
-                                  extra_headers={"X-LST":"150000","X-Line-Session-ID":session_id,"Referer":""},
-                                  timeout=20)
-                    if r.json().get("code") == 0:
+                                  extra_headers={"X-LST":"110000","X-Line-Session-ID":session_id,"Referer":""},
+                                  timeout=120,
+                                  no_origin=True)
+                    resp = r.json()
+                    print(f"\n  PIN poll: {json.dumps(resp)[:200]}")
+                    if resp.get("code") == 0:
                         print("✓ PIN verified!")
                         break
                 except requests.exceptions.ReadTimeout:
                     sys.stdout.write(".")
                     sys.stdout.flush()
         else:
-            print(f"  ⚠ No PIN returned — trying login anyway")
+            print(f"  ⚠ createPinCode failed — session may have expired")
 
     # Final login
     print("Logging in...")
