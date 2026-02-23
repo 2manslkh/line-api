@@ -21,6 +21,14 @@ SEARCHES = [
     ("subtle.sign",             r'subtle\.sign\('),
     ("onmessage handler",       r'onmessage\s*=|addEventListener\(\s*["\']message'),
     ("token+path+body",         r'accessToken.{0,80}path.{0,80}body|path.{0,80}body.{0,80}accessToken'),
+    # cS/lS initialization & deriveKey
+    ("cS assignment",           r'cS\s*=\s*[^,;]{5,80}'),
+    ("lS assignment",           r'lS\s*=\s*[^,;]{5,80}'),
+    ("deriveKey def/call",      r'deriveKey\s*[\(=]'),
+    ("fS constructor",          r'fS\s*[\(=]'),
+    ("LTSM_NOT_READY",         r'LTSM_NOT_READY'),
+    ("tm function (SHA)",       r'(?:function\s+tm|tm\s*=\s*async|const\s+tm)'),
+    ("yw error class",          r'class\s+yw|yw\s*=\s*'),
 ]
 
 
