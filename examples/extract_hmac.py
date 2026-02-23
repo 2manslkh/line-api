@@ -29,6 +29,13 @@ SEARCHES = [
     ("LTSM_NOT_READY",         r'LTSM_NOT_READY'),
     ("tm function (SHA)",       r'(?:function\s+tm|tm\s*=\s*async|const\s+tm)'),
     ("yw error class",          r'class\s+yw|yw\s*=\s*'),
+    # SecureKey / WASM tracing
+    ("SecureKey class/ref",     r'SecureKey'),
+    ("loadToken def/call",      r'loadToken\s*[\(=]'),
+    ("uS assignment",           r'uS\s*=\s*[^,;]{5,80}'),
+    (".wasm reference",         r'\.wasm'),
+    ("WebAssembly",             r'WebAssembly\.(?:instantiate|compile|Module)'),
+    ("origin token map",        r'chrome-extension://[^"]{20,60}"\s*:\s*"[^"]+'),
 ]
 
 
