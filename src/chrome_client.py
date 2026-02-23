@@ -287,10 +287,29 @@ class LineChromeClient:
 
     # ── Profile & Settings ──
 
-    def update_profile_attributes(self, attrs: dict) -> dict:
-        """Update profile. attrs keys: displayName, statusMessage, pictureStatus, etc."""
-        # attr_bitset indicates which fields to update
-        return self._call("updateProfileAttributes", [self._next_seq(), attrs])
+    def update_profile_attributes(self, attr: int, value: str, meta: dict = None) -> dict:
+        """
+        Update a profile attribute.
+
+        Attribute IDs:
+            2  = DISPLAY_NAME
+            16 = STATUS_MESSAGE
+            4  = PICTURE_STATUS (profile picture path)
+
+        Example: client.update_profile_attributes(16, "Hello world!")
+        """
+        return self._call("updateProfileAttributes", [
+            self._next_seq(),
+            {"profileAttributes": {str(attr): {"value": value, "meta": meta or {}}}}
+        ])
+
+    def update_status_message(self, message: str) -> dict:
+        """Shortcut to update status message."""
+        return self.update_profile_attributes(16, message)
+
+    def update_display_name(self, name: str) -> dict:
+        """Shortcut to update display name."""
+        return self.update_profile_attributes(2, name)
 
     def get_settings(self) -> dict:
         return self._call("getSettings")
