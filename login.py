@@ -124,7 +124,7 @@ def main():
         public_key_b64 = base64.b64encode(bytes(private_key.public_key)).decode()
 
         # Create session
-        r = post_json(signer, "/api/talk/thrift/LoginQrCode/SecondaryQrCodeLoginService/createSession", [])
+        r = post_json(signer, "/api/talk/thrift/LoginQrCode/SecondaryQrCodeLoginService/createSession", [{}])
         resp = r.json()
         if resp.get("code") != 0:
             print(f"  ✗ createSession failed: {resp}")
