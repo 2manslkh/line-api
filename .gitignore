@@ -22,3 +22,5 @@ tokens.json
 # Large binary artifacts (extract from Chrome extension locally)
 # lstm.wasm
 # lstmSandbox.js
+lstm.wat
+login_thrift.py
