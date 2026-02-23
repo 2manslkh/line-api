@@ -42,7 +42,15 @@ HEADERS = {
 
 def get_signer():
     from src.hmac import HmacSigner
-    return HmacSigner(mode="server")
+    try:
+        s = HmacSigner(mode="server")
+        # Quick test
+        result = s.sign("test", "/test", "")
+        print(f"  HMAC test: {result[:20]}...")
+        return s
+    except Exception as e:
+        print(f"  ⚠ Server mode failed ({e}), falling back to subprocess")
+        return HmacSigner(mode="subprocess")
 
 
 def post_json(signer, path, data, token=""):
@@ -115,12 +123,22 @@ def main():
 
         # Create session
         r = post_json(signer, "/api/talk/thrift/LoginQrCode/SecondaryQrCodeLoginService/createSession", [])
-        session_id = r.json()["data"]["authSessionId"]
+        resp = r.json()
+        if resp.get("code") != 0:
+            print(f"  ✗ createSession failed: {resp}")
+            sys.exit(1)
+        session_id = resp["data"]["authSessionId"]
+        print(f"  Session: {session_id[:30]}...")
 
         # Create QR code
         r = post_json(signer, "/api/talk/thrift/LoginQrCode/SecondaryQrCodeLoginService/createQrCode",
                       [{"authSessionId": session_id}])
-        callback_url = r.json()["data"]["callbackUrl"]
+        resp = r.json()
+        if resp.get("code") != 0:
+            print(f"  ✗ createQrCode failed: {resp}")
+            sys.exit(1)
+        callback_url = resp["data"]["callbackUrl"]
+        print(f"  URL: {callback_url[:60]}...")
         qr_url = f"{callback_url}?secret={urllib.parse.quote(public_key_b64)}&e2eeVersion=1"
 
         print(f"{'=' * 50}")
