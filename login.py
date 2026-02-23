@@ -152,8 +152,9 @@ def main():
 
         # Poll for scan via Chrome GW (same as extension does)
         poll_path = "/api/talk/thrift/LoginQrCode/SecondaryQrCodeLoginPermitNoticeService/checkQrCodeVerified"
-        for i in range(8):
+        for i in range(60):  # poll for up to ~2 min
             try:
+                t0 = time.time()
                 r = post_json(signer, poll_path,
                               [{"authSessionId": session_id}],
                               extra_headers={
@@ -162,16 +163,29 @@ def main():
                                   "Referer": "",
                               },
                               timeout=20)
+                elapsed = time.time() - t0
                 resp = r.json()
-                print(f"\n  Poll response: {json.dumps(resp)[:200]}")
-                if resp.get("code") == 0:
+                print(f"\n  Poll [{i+1}] ({elapsed:.1f}s): {json.dumps(resp)[:200]}")
+                
+                if resp.get("code") == 0 and elapsed > 1:
+                    # Real long-poll returned = actually scanned
                     scanned = True
                     break
+                elif resp.get("code") == 0 and elapsed < 1:
+                    # Returned too fast — not a real scan, keep polling
+                    print("  (instant return, not scanned yet)")
+                    time.sleep(2)
+                    continue
                 elif resp.get("code") == 10052:
-                    sys.stdout.write(".")
-                    sys.stdout.flush()
+                    # Backend timeout, retry
+                    continue
+                elif resp.get("code") == 10051:
+                    # Session expired
+                    print("  Session expired")
+                    break
                 else:
-                    print(f"\n  Unexpected: {resp}")
+                    print(f"  Unexpected code: {resp.get('code')}")
+                    time.sleep(2)
             except requests.exceptions.ReadTimeout:
                 sys.stdout.write(".")
                 sys.stdout.flush()
