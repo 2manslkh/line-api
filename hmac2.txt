@@ -1,0 +1,128 @@
+# static/js/ltsmSandbox.js — 2,420,755 bytes
+
+
+## GET_HMAC handler (2 hits)
+
+--- offset 1724408 ---
+V2="e2eechannel_encrypt_v2",e.E2EECHANNEL_DECRYPT_V2="e2eechannel_decrypt_v2",e.GET_HMAC="get_hmac",e}({}),g=function(e){return e.E2EE_PREPARE_KEY="e2ee_prepare_key",e.GLOBAL_ALERT="global_alert",e.ALERT="alert",e.SEND_MESSAGE="send_message",e.SEND_FILE_MESSAGE="send_file_message",e.DOWN
+
+--- offset 2385291 ---
+entType:o,ciphertext:a}})}getHmac(e){return this.sandbox.sendMessage({command:m.GET_HMAC,payload:e})}}let Hw;const Kw=()=>(Hw||(Hw=new qw),Hw),Gw={tokenV3IssueResult:{accessToken:"",refreshToken:"",durationUntilRefreshInSec:"",refreshApiRetryPolicy:{initialDelayInMillis:"",maxDelayInMill
+
+
+## importKey HMAC (1 hit)
+
+--- offset 2252922 ---
+lice(i,i+r))),i+=r;return n},Ev=async(e,t)=>{const r=await window.crypto.subtle.importKey("raw",t,{name:"HMAC",hash:"SHA-256"},!1,["sign"]);return new Uint8Array(await window.crypto.subtle.sign("HMAC",r,e))},wv=()=>{return cg((e=32,window.crypto.getRandomValues(new Uint8Array(e))));var e},_v=(e,t)=>t.some((t=
+
+
+## subtle.sign (1 hit)
+
+--- offset 2253024 ---
+e:"HMAC",hash:"SHA-256"},!1,["sign"]);return new Uint8Array(await window.crypto.subtle.sign("HMAC",r,e))},wv=()=>{return cg((e=32,window.crypto.getRandomValues(new Uint8Array(e))));var e},_v=(e,t)=>t.some((t=>e instanceof t));let Sv,Av;const xv=new WeakMap,Tv=new WeakMap,Mv=new WeakMap;let C
+
+
+## onmessage handler (2 hits)
+
+--- offset 56675 ---
+|void 0===t?void 0:t.call(l,{nativeEvent:e,transport:l})},(0,p.default)(this,w).onmessage=function(e){var t;return null===(t=l.onreceive)||void 0===t?void 0:t.call(l,{nativeEvent:e,transport:l})},(0,h.default)(this,_,a?(0,o.default)(a):[]),s=y((0,p.default)(this,_));try{for(s.s();!(u=s.n()
+
+--- offset 57807 ---
+f()}(0,h.default)(this,_,[]),(0,p.default)(this,w).onopen=(0,p.default)(this,w).onmessage=(0,p.default)(this,w).onerror=null,(0,h.default)(this,w,void 0);case 9:case"end":return e.stop()}}),e,this)})));return function(){return e.apply(this,arguments)}}()},{key:"cancel",value:function(){}}]
+
+
+## token+path+body (2 hits)
+
+--- offset 1840449 ---
+)&&void 0!==t?t:"",""),o=JSON.stringify(e.data);try{const t=await Kw().getHmac({accessToken:r,path:n,body:o});e.headers["X-Hmac"]=t}catch(a){xr(a,{tags:{category:d.HMAC,path:n}})}return e})),i.interceptors.response.use((e=>{var t,r;return e.config.url&&xg(null===(t=e.data)||void 0===t?void 0:t.data,e.con
+
+--- offset 2420151 ---
+r,type:p.ERROR,data:o})}break;case m.GET_HMAC:try{const e=await async function({path:e,body:t,accessToken:r}){if(!cS||!lS)throw new yw(l.LTSM_NOT_READY);const n=fS(),i=cS.deriveKey(lS,await tm((new TextEncoder).encode(r))),o=new n.Hmac(i),a=(new TextEncoder).encode(e+(null!==t&&void 0!==t?t:""));return c
+
+
+## cS assignment (1 hit)
+
+--- offset 2414788 ---
+_w9ZaBSisb2rlnKvPUkMK_93GS30"}[t];if(!r)throw new Error(`Invalid origin: ${t}`);cS=e.SecureKey.loadToken(r),lS=await tm((new TextEncoder).encode("3.7.1"))}()}function fS(){if(!uS)throw new yw(l.LTSM_NOT_READY);if(!uS.isAvailable())throw new yw(l.LTSM_NOT_AVAILABLE);return uS}let hS,pS={},mS={},gS=0;functio
+
+
+## lS assignment (1 hit)
+
+--- offset 2414816 ---
+"}[t];if(!r)throw new Error(`Invalid origin: ${t}`);cS=e.SecureKey.loadToken(r),lS=await tm((new TextEncoder).encode("3.7.1"))}()}function fS(){if(!uS)throw new yw(l.LTSM_NOT_READY);if(!uS.isAvailable())throw new yw(l.LTSM_NOT_AVAILABLE);return uS}let hS,pS={},mS={},gS=0;function vS(){return++gS}function yS(e){const t=pS[e];if(!t)throw new yw(l.LTSM_E2EE_KEY_NO
+
+
+## deriveKey def/call (1 hit)
+
+--- offset 2420242 ---
+:t,accessToken:r}){if(!cS||!lS)throw new yw(l.LTSM_NOT_READY);const n=fS(),i=cS.deriveKey(lS,await tm((new TextEncoder).encode(r))),o=new n.Hmac(i),a=(new TextEncoder).encode(e+(null!==t&&void 0!==t?t:""));return cg(o.digest(a))}(n.payload);AS({sandboxId:r,type:p.RESPONSE,data:e})}catch(o)
+
+
+## fS constructor (2 hits)
+
+--- offset 2414426 ---
+isAvailable())throw new yw(l.LTSM_NOT_AVAILABLE);await async function(){const e=fS(),t="null"!==window.origin?window.origin:window.location.origin,r={"chrome-extension://ophjlpahpchlmihnnnihgmmeilfjmjjc":"YOUR_CHROME_TOKEN_HERE","chrome-exte
+
+
+## LTSM_NOT_READY (2 hits)
+
+--- offset 1721296 ---
+up",e.GENERAL_ERROR="general_error",e.LTSM_NOT_AVAILABLE="ltsm_not_available",e.LTSM_NOT_READY="ltsm_not_ready",e.LTSM_E2EE_KEY_NOT_EXISTS="ltsm_e2ee_key_not_exists",e.LTSM_E2EE_CHANNEL_NOT_EXISTS="ltsm_e2ee_channel_not_exists",e.SECURE_STORAGE_NOT_READY="secure_storage_not_ready",e.NETWORK_ER
+
+--- offset 2414902 ---
+it tm((new TextEncoder).encode("3.7.1"))}()}function fS(){if(!uS)throw new yw(l.LTSM_NOT_READY);if(!uS.isAvailable())throw new yw(l.LTSM_NOT_AVAILABLE);return uS}let hS,pS={},mS={},gS=0;function vS(){return++gS}function yS(e){const t=pS[e];if(!t)throw new yw(l.LTSM_E2EE_KEY_NOT_EXISTS);return 
+
+
+## tm function (SHA) (1 hit)
+
+--- offset 2220195 ---
+t:Rl,message:_p,messageBox:Pp,room:qp,talkChat:Yp,ui:Jp.reducer}),devTools:!1}),tm=async e=>"string"===typeof e?tm((new TextEncoder).encode(e)):new Uint8Array(await window.crypto.subtle.digest("SHA-256",e)),rm=async e=>{try{await wo({ignoreTalkAuthException:!0})}finally{pg&&await chrome.
+
+
+## yw error class (1 hit)
+
+--- offset 2357960 ---
+e)}flush(){const e=rv(this.outputBufferList);return this.outputBufferList=[],e}}class yw extends Error{constructor(e){super(e),this.code=void 0,this.code=e}}class bw{constructor(e,t){this.factory=e,this.cleanUp=t,this.map=new Map}get(e){const t=Km()(e);return this.map.has(t)||this.map.se
+
+
+## SecureKey class/ref (2 hits)
+
+--- offset 2415768 ---
+ry{!function({wrappedNonce:e,kdfParameter1:t,kdfParameter2:r}){const n=fS(),i=n.SecureKey.unwrapKeyFromEncryptedIdentityV3Response(ug(e),ug(t),ug(r));hS=new n.AesKey(i)}(n.payload),AS({sandboxId:r,type:p.RESPONSE})}catch(o){AS({sandboxId:r,type:p.ERROR,data:o})}break;case m.STORAGE_KEY_DE
+
+
+## loadToken def/call (1 hit)
+
+
+## uS assignment (1 hit)
+
+--- offset 2414327 ---
+;const sS=()=>(aS||(aS=new oS),aS);r(50663);let uS,cS,lS;async function dS(){if(uS=await Q()(),!uS.isAvailable())throw new yw(l.LTSM_NOT_AVAILABLE);await async function(){const e=fS(),t="null"!==window.origin?window.origin:window.location.origin,r={"chrome-extension://ophjlpahpchlmihnnnihgmmei
+
+
+## .wasm reference (2 hits)
+
+--- offset 72982 ---
+=null,a.arguments&&(p=a.arguments),a.thisProgram&&a.thisProgram,a.quit&&a.quit,a.wasmBinary&&(b=a.wasmBinary);var _,S=a.noExitRuntime||!0;"object"!=typeof WebAssembly&&oe("no native wasm support detected");var A=!1;function x(e,t){e||oe(t)}var T="undefined"!=typeof TextDecoder?new Tex
+
+--- offset 72999 ---
+&&(p=a.arguments),a.thisProgram&&a.thisProgram,a.quit&&a.quit,a.wasmBinary&&(b=a.wasmBinary);var _,S=a.noExitRuntime||!0;"object"!=typeof WebAssembly&&oe("no native wasm support detected");var A=!1;function x(e,t){e||oe(t)}var T="undefined"!=typeof TextDecoder?new TextDecoder("utf8"):
+
+
+## WebAssembly (2 hits)
+
+--- offset 134860 ---
+Promise.resolve().then((function(){return de(ae)}))}().then((function(t){return WebAssembly.instantiate(t,e)})).then((function(e){return e})).then(t,(function(e){w("failed to asynchronously prepare wasm: "+e),oe(e)}))}if(ne(),a.instantiateWasm)try{return a.instantiateWasm(e,t)}catch(i){return w("Module
+
+--- offset 135159 ---
+dule.instantiateWasm callback failed with error: "+i),!1}(b||"function"!=typeof WebAssembly.instantiateStreaming||ce(ae)||le(ae)||v||"function"!=typeof fetch?n(r):fetch(ae,{credentials:"same-origin"}).then((function(t){return WebAssembly.instantiateStreaming(t,e).then(r,(function(e){return w("wasm stre
+
+
+## origin token map (2 hits)
+
+--- offset 2414497 ---
+{const e=fS(),t="null"!==window.origin?window.origin:window.location.origin,r={"chrome-extension://ophjlpahpchlmihnnnihgmmeilfjmjjc":"YOUR_CHROME_TOKEN_HERE","chrome-extension://jeafcjlknhfnfkfeliiolabnpjahldie":"GS-30Ed0WxiXR50y9hED4O1qmJ2QaBK0dFpc_w9ZaBSisb2rlnKvPUkMK_93GS30"}[t];if(!r)throw new Error(`Invalid origin: ${t}`);cS=e.SecureKey.loadToken(r)
+
+--- offset 2414618 ---
+meilfjmjjc":"YOUR_CHROME_TOKEN_HERE","chrome-extension://jeafcjlknhfnfkfeliiolabnpjahldie":"GS-30Ed0WxiXR50y9hED4O1qmJ2QaBK0dFpc_w9ZaBSisb2rlnKvPUkMK_93GS30"}[t];if(!r)throw new Error(`Invalid origin: ${t}`);cS=e.SecureKey.loadToken(r),lS=await tm((new TextEncoder).encode("3.7.1"))}()}function fS(){if(!uS)throw new yw(l.LTSM_NOT_READY);if(!uS.isAvailable
+

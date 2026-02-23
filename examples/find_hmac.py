@@ -12,24 +12,28 @@ import sys
 
 
 def find_extension_dir():
-    """Find the LINE Chrome extension directory."""
-    base_paths = [
-        os.path.expanduser("~/Library/Application Support/Google/Chrome/Default/Extensions"),
-        os.path.expanduser("~/Library/Application Support/BraveSoftware/Brave-Browser/Default/Extensions"),
-        os.path.expanduser("~/.config/google-chrome/Default/Extensions"),
-        os.path.expanduser("~/.config/BraveSoftware/Brave-Browser/Default/Extensions"),
+    """Find the LINE Chrome extension directory across all browser profiles."""
+    browser_roots = [
+        os.path.expanduser("~/Library/Application Support/Google/Chrome"),
+        os.path.expanduser("~/Library/Application Support/BraveSoftware/Brave-Browser"),
+        os.path.expanduser("~/.config/google-chrome"),
+        os.path.expanduser("~/.config/BraveSoftware/Brave-Browser"),
     ]
-    
+
     ext_id = "ophjlpahpchlmihnnnihgmmeilfjmjjc"
-    
-    for base in base_paths:
-        ext_path = os.path.join(base, ext_id)
-        if os.path.exists(ext_path):
-            # Get latest version
-            versions = sorted(os.listdir(ext_path))
-            if versions:
-                return os.path.join(ext_path, versions[-1])
-    
+
+    for root in browser_roots:
+        if not os.path.isdir(root):
+            continue
+        # Search Default and all Profile * directories
+        for entry in os.listdir(root):
+            if entry == "Default" or entry.startswith("Profile"):
+                ext_path = os.path.join(root, entry, "Extensions", ext_id)
+                if os.path.exists(ext_path):
+                    versions = sorted(os.listdir(ext_path))
+                    if versions:
+                        return os.path.join(ext_path, versions[-1])
+
     return None
 
 
