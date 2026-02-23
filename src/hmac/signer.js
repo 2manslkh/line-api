@@ -103,8 +103,8 @@ async function cli() {
   const [,, cmd, ...args] = process.argv;
 
   if (cmd === 'sign') {
-    const [accessToken, reqPath, body] = args;
-    if (!accessToken || !reqPath) {
+    const [accessToken = '', reqPath, body] = args;
+    if (reqPath === undefined) {
       console.error('Usage: node signer.js sign <accessToken> <path> [body]');
       process.exit(1);
     }
