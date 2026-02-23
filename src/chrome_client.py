@@ -18,6 +18,7 @@ import time
 import threading
 import requests
 from typing import Callable
+from .hmac import HmacSigner
 
 
 BASE_URL = "https://line-chrome-gw.line-apps.com"
@@ -28,7 +29,7 @@ POLL_BASE = f"{BASE_URL}/api/talk/thrift/Talk"
 class LineChromeClient:
     """LINE client using the Chrome extension gateway (JSON API)."""
 
-    def __init__(self, auth_token: str):
+    def __init__(self, auth_token: str, hmac_mode: str = "server"):
         self.auth_token = auth_token
         self._msg_seq = int(time.time())
         self._session = requests.Session()
@@ -36,6 +37,7 @@ class LineChromeClient:
         self.revision = 0
         self.mid: str | None = None
         self.profile: dict | None = None
+        self._hmac = HmacSigner(mode=hmac_mode)
 
         # Init
         self._init_profile()
@@ -59,12 +61,19 @@ class LineChromeClient:
         self._msg_seq += 1
         return self._msg_seq
 
+    def _sign_request(self, path: str, body: str) -> str:
+        """Compute X-Hmac for a request."""
+        return self._hmac.sign(self.auth_token, path, body)
+
     def _call(self, endpoint: str, params: list | dict = None, timeout: int = 30) -> dict:
         """Make a JSON API call to the Chrome gateway."""
         if params is None:
             params = []
-        url = f"{TALK_BASE}/{endpoint}"
-        resp = self._session.post(url, json=params, headers=self._headers, timeout=timeout)
+        path = f"/api/talk/thrift/Talk/TalkService/{endpoint}"
+        url = BASE_URL + path
+        body = json.dumps(params)
+        headers = {**self._headers, "X-Hmac": self._sign_request(path, body)}
+        resp = self._session.post(url, data=body, headers=headers, timeout=timeout)
         resp.raise_for_status()
         data = resp.json()
         if data.get("code") != 0:
@@ -75,7 +84,12 @@ class LineChromeClient:
         """Call an arbitrary endpoint."""
         if params is None:
             params = []
-        resp = self._session.post(url, json=params, headers=self._headers, timeout=timeout)
+        # Extract path from URL for HMAC
+        from urllib.parse import urlparse
+        path = urlparse(url).path
+        body = json.dumps(params)
+        headers = {**self._headers, "X-Hmac": self._sign_request(path, body)}
+        resp = self._session.post(url, data=body, headers=headers, timeout=timeout)
         resp.raise_for_status()
         return resp.json()
 
