@@ -1,0 +1,39 @@
+"""Thrift type constants."""
+
+# Thrift type IDs
+STOP = 0
+BOOL_TRUE = 1
+BOOL_FALSE = 2
+BYTE = 3
+I16 = 4
+I32 = 5
+I64 = 6
+DOUBLE = 7
+BINARY = 8  # also STRING
+LIST = 9
+SET = 10
+MAP = 11
+STRUCT = 12
+
+# TBinary type IDs (different numbering)
+TBINARY_BOOL = 2
+TBINARY_BYTE = 3
+TBINARY_DOUBLE = 4
+TBINARY_I16 = 6
+TBINARY_I32 = 8
+TBINARY_I64 = 10
+TBINARY_STRING = 11
+TBINARY_STRUCT = 12
+TBINARY_MAP = 13
+TBINARY_SET = 14
+TBINARY_LIST = 15
+
+# Message types
+CALL = 1
+REPLY = 2
+EXCEPTION = 3
+ONEWAY = 4
+
+# TBinary protocol version
+TBINARY_VERSION_1 = 0x80010000
+TBINARY_VERSION_MASK = 0xFFFF0000
