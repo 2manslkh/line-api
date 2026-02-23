@@ -102,48 +102,55 @@ def main():
     print("=" * 50)
 
     signer = get_signer()
-    print("✓ HMAC signer ready")
+    print("✓ HMAC signer ready\n")
 
-    # Generate E2EE keypair
-    private_key = PrivateKey.generate()
-    public_key_b64 = base64.b64encode(bytes(private_key.public_key)).decode()
-
-    # Create session
-    r = post_json(signer, "/api/talk/thrift/LoginQrCode/SecondaryQrCodeLoginService/createSession", [])
-    session_id = r.json()["data"]["authSessionId"]
-    print(f"✓ Session created")
-
-    # Create QR code
-    r = post_json(signer, "/api/talk/thrift/LoginQrCode/SecondaryQrCodeLoginService/createQrCode",
-                  [{"authSessionId": session_id}])
-    callback_url = r.json()["data"]["callbackUrl"]
-    qr_url = f"{callback_url}?secret={urllib.parse.quote(public_key_b64)}&e2eeVersion=1"
-
-    print(f"\n{'=' * 50}")
-    print("Scan this QR code with LINE app:")
-    print(f"{'=' * 50}\n")
-    display_qr(qr_url)
-    print(f"\n{'=' * 50}")
-    print("Waiting for scan...\n")
-
-    # Poll for scan
     scanned = False
-    for i in range(20):  # ~5 min
-        try:
-            r = thrift_long_poll("checkQrCodeVerified", session_id, timeout=15)
-            if r.status_code == 200:
-                scanned = True
-                break
-        except requests.exceptions.ReadTimeout:
-            sys.stdout.write(".")
-            sys.stdout.flush()
-            continue
-        except Exception as e:
-            print(f"\nPoll error: {e}")
-            time.sleep(1)
+    session_id = None
+    private_key = None
+
+    for attempt in range(3):  # Up to 3 QR codes
+        # Generate E2EE keypair
+        private_key = PrivateKey.generate()
+        public_key_b64 = base64.b64encode(bytes(private_key.public_key)).decode()
+
+        # Create session
+        r = post_json(signer, "/api/talk/thrift/LoginQrCode/SecondaryQrCodeLoginService/createSession", [])
+        session_id = r.json()["data"]["authSessionId"]
+
+        # Create QR code
+        r = post_json(signer, "/api/talk/thrift/LoginQrCode/SecondaryQrCodeLoginService/createQrCode",
+                      [{"authSessionId": session_id}])
+        callback_url = r.json()["data"]["callbackUrl"]
+        qr_url = f"{callback_url}?secret={urllib.parse.quote(public_key_b64)}&e2eeVersion=1"
+
+        print(f"{'=' * 50}")
+        print(f"  Scan NOW with LINE app (attempt {attempt + 1}/3)")
+        print(f"{'=' * 50}\n")
+        display_qr(qr_url)
+        print(f"\n{'=' * 50}")
+        print("Waiting for scan (2 min timeout)...\n")
+
+        # Poll for scan — 8 rounds * 15s = 2 min
+        for i in range(8):
+            try:
+                r = thrift_long_poll("checkQrCodeVerified", session_id, timeout=15)
+                if r.status_code == 200:
+                    scanned = True
+                    break
+            except requests.exceptions.ReadTimeout:
+                sys.stdout.write(".")
+                sys.stdout.flush()
+                continue
+            except Exception as e:
+                print(f"\nPoll error: {e}")
+                time.sleep(1)
+
+        if scanned:
+            break
+        print("\n\n⚠ QR expired. Generating a new one...\n")
 
     if not scanned:
-        print("\n✗ Timed out waiting for scan. Try again.")
+        print("\n✗ Failed after 3 attempts. Try again.")
         sys.exit(1)
 
     print("\n✓ QR code scanned!")
