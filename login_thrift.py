@@ -19,8 +19,8 @@ import requests
 from pathlib import Path
 from nacl.public import PrivateKey
 
-LINE_HOST = "https://ga2.line.naver.jp"
-LINE_LP_HOST = "https://ga2.line.naver.jp"  # long-poll same host
+LINE_HOST = "https://legy-jp.line-apps.com"
+LINE_LP_HOST = "https://legy-jp.line-apps.com"
 CACHE_DIR = Path.home() / ".line-client"
 
 APP_NAME = "CHROMEOS\t3.7.1\tChrome OS\t1"
@@ -183,13 +183,21 @@ def parse_thrift_response(data):
     return result
 
 
-def thrift_post(path, data, headers=None, timeout=10):
+def thrift_post(path, data, headers=None, timeout=10, host=None):
     """POST Thrift binary to LINE server."""
     h = {**HEADERS}
     if headers:
         h.update(headers)
-    r = requests.post(LINE_HOST + path, data=data, headers=h, timeout=timeout)
-    return r
+    url = (host or LINE_HOST) + path
+    try:
+        r = requests.post(url, data=data, headers=h, timeout=timeout)
+        return r
+    except requests.exceptions.ConnectTimeout:
+        print(f"\n  ✗ Connection timeout to {url}")
+        raise
+    except requests.exceptions.ConnectionError as e:
+        print(f"\n  ✗ Connection error to {url}: {e}")
+        raise
 
 
 def create_session():
