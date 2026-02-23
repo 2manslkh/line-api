@@ -195,8 +195,8 @@ def main():
     # Final login
     print("Logging in...")
     r = post_json(signer, "/api/talk/thrift/LoginQrCode/SecondaryQrCodeLoginService/qrCodeLoginV2",
-                  [{"authSessionId": session_id, "systemName": "LINE for Chrome",
-                    "deviceType": "CHROMEOS", "autoLoginIsRequired": True}])
+                  [{"authSessionId": session_id, "systemName": "Chrome OS",
+                    "modelName": "Chrome OS", "autoLoginIsRequired": True}])
 
     full_resp = r.json()
     print(f"  Login response: {json.dumps(full_resp)}")
