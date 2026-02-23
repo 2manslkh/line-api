@@ -156,8 +156,11 @@ def main():
             try:
                 r = post_json(signer, poll_path,
                               [{"authSessionId": session_id}],
-                              token=session_id,
-                              extra_headers={"x-lst": "150000"},
+                              extra_headers={
+                                  "X-LST": "150000",
+                                  "X-Line-Session-ID": session_id,
+                                  "Referer": "",
+                              },
                               timeout=20)
                 resp = r.json()
                 print(f"\n  Poll response: {json.dumps(resp)[:200]}")
@@ -165,7 +168,6 @@ def main():
                     scanned = True
                     break
                 elif resp.get("code") == 10052:
-                    # HTTP error from backend - might be timeout, retry
                     sys.stdout.write(".")
                     sys.stdout.flush()
                 else:
@@ -219,8 +221,11 @@ def main():
             try:
                 r = post_json(signer, pin_poll_path,
                               [{"authSessionId": session_id}],
-                              token=session_id,
-                              extra_headers={"x-lst": "150000"},
+                              extra_headers={
+                                  "X-LST": "150000",
+                                  "X-Line-Session-ID": session_id,
+                                  "Referer": "",
+                              },
                               timeout=20)
                 resp = r.json()
                 if resp.get("code") == 0:
