@@ -11,17 +11,14 @@ import re
 import os
 import sys
 
-BEFORE = 150
-AFTER = 400
-MAX_PER_PATTERN = 2
+BEFORE = 80
+AFTER = 200
+MAX_PER_PATTERN = 1
 
 SEARCHES = [
     ("GET_HMAC handler",        r'GET_HMAC'),
-    ("hmac compute/sign",       r'async[^{]{0,60}hmac|computeHmac|calcHmac|generateHmac'),
-    ("HMAC SHA256",             r'HMAC.*SHA-256|SHA-256.*HMAC'),
     ("importKey HMAC",          r'importKey\([^)]*"HMAC"'),
     ("subtle.sign",             r'subtle\.sign\('),
-    ("command switch/case",     r'case\s+\d+\s*:.*(?:HMAC|hmac|GET_HMAC)'),
     ("onmessage handler",       r'onmessage\s*=|addEventListener\(\s*["\']message'),
     ("token+path+body",         r'accessToken.{0,80}path.{0,80}body|path.{0,80}body.{0,80}accessToken'),
 ]
