@@ -198,7 +198,9 @@ def main():
                   [{"authSessionId": session_id, "systemName": "LINE for Chrome",
                     "deviceType": "CHROMEOS", "autoLoginIsRequired": True}])
 
-    data = r.json().get("data", {})
+    full_resp = r.json()
+    print(f"  Login response: {json.dumps(full_resp)}")
+    data = full_resp.get("data", {})
     token_v3 = data.get("tokenV3IssueResult", {})
     auth_token = token_v3.get("accessToken")
     refresh_token = token_v3.get("refreshToken")
