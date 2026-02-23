@@ -1,1 +1,2 @@
-from .client import LineClient
+# Lazy imports to avoid pulling in all dependencies
+# from .client import LineClient
