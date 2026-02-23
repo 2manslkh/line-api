@@ -117,6 +117,43 @@ class LineChromeClient:
     def get_all_contact_ids(self) -> list:
         return self._call("getAllContactIds")
 
+    def find_contact_by_userid(self, userid: str) -> dict:
+        """Search for a contact by LINE ID."""
+        return self._call("findContactByUserid", [userid])
+
+    def find_and_add_contact_by_mid(self, mid: str) -> dict:
+        """Add a friend by MID."""
+        return self._call("findAndAddContactsByMid", [self._next_seq(), mid, 0, ""])
+
+    def find_contacts_by_phone(self, phones: list[str]) -> dict:
+        """Search contacts by phone numbers."""
+        return self._call("findContactsByPhone", [phones])
+
+    def get_blocked_contact_ids(self) -> list:
+        return self._call("getBlockedContactIds")
+
+    def get_blocked_recommendation_ids(self) -> list:
+        return self._call("getBlockedRecommendationIds")
+
+    def block_contact(self, mid: str) -> dict:
+        return self._call("blockContact", [self._next_seq(), mid])
+
+    def unblock_contact(self, mid: str) -> dict:
+        return self._call("unblockContact", [self._next_seq(), mid])
+
+    def block_recommendation(self, mid: str) -> dict:
+        return self._call("blockRecommendation", [self._next_seq(), mid])
+
+    def update_contact_setting(self, mid: str, flag: int, value: str) -> dict:
+        """Update contact setting. flag: 1=CONTACT_SETTING_NOTIFICATION_DISABLE, etc."""
+        return self._call("updateContactSetting", [self._next_seq(), mid, flag, value])
+
+    def get_favorite_mids(self) -> list:
+        return self._call("getFavoriteMids")
+
+    def get_recommendation_ids(self) -> list:
+        return self._call("getRecommendationIds")
+
     # ── Messaging ──
 
     def send_message(
@@ -153,12 +190,38 @@ class LineChromeClient:
     def get_recent_messages(self, chat_id: str, count: int = 50) -> list:
         return self._call("getRecentMessagesV2", [chat_id, count])
 
+    def get_previous_messages(self, chat_id: str, end_seq: int, count: int = 50) -> list:
+        """Get paginated message history before a given sequence number."""
+        return self._call("getPreviousMessagesV2WithRequest", [
+            {"chatId": chat_id, "endSeq": end_seq, "limit": count, "withReadCount": True}
+        ])
+
+    def get_messages_by_ids(self, message_ids: list[str]) -> list:
+        """Fetch specific messages by their IDs."""
+        return self._call("getMessagesByIds", [message_ids])
+
+    def get_message_boxes(self, count: int = 50) -> list:
+        """Get chat list with last message preview (inbox)."""
+        return self._call("getMessageBoxes", ["", count, 0])
+
+    def get_message_boxes_by_ids(self, chat_ids: list[str]) -> list:
+        """Get specific chats with last message preview."""
+        return self._call("getMessageBoxesByIds", [chat_ids])
+
     def get_message_read_range(self, chat_ids: list[str]) -> dict:
         return self._call("getMessageReadRange", [chat_ids])
 
     def send_chat_checked(self, chat_id: str, last_message_id: str) -> dict:
         """Mark messages as read."""
         return self._call("sendChatChecked", [self._next_seq(), chat_id, last_message_id])
+
+    def send_chat_removed(self, chat_id: str, last_message_id: str) -> dict:
+        """Remove/delete a chat from inbox."""
+        return self._call("sendChatRemoved", [self._next_seq(), chat_id, last_message_id])
+
+    def send_postback(self, to: str, postback_data: str) -> dict:
+        """Send postback content (for bot interactions)."""
+        return self._call("sendPostback", [self._next_seq(), to, postback_data])
 
     # ── Chats & Groups ──
 
@@ -177,11 +240,120 @@ class LineChromeClient:
     def leave_chat(self, chat_id: str) -> dict:
         return self._call("deleteSelfFromChat", [self._next_seq(), chat_id])
 
+    def invite_into_chat(self, chat_id: str, mids: list[str]) -> dict:
+        """Invite users into a group chat."""
+        return self._call("inviteIntoChat", [self._next_seq(), chat_id, {"targetUserMids": mids}])
+
+    def cancel_chat_invitation(self, chat_id: str, mids: list[str]) -> dict:
+        """Cancel pending invitations."""
+        return self._call("cancelChatInvitation", [self._next_seq(), chat_id, {"targetUserMids": mids}])
+
+    def reject_chat_invitation(self, chat_id: str) -> dict:
+        """Reject a group chat invitation."""
+        return self._call("rejectChatInvitation", [self._next_seq(), chat_id])
+
+    def delete_other_from_chat(self, chat_id: str, mids: list[str]) -> dict:
+        """Kick members from a group chat."""
+        return self._call("deleteOtherFromChat", [self._next_seq(), chat_id, {"targetUserMids": mids}])
+
+    def update_chat(self, chat_id: str, updates: dict) -> dict:
+        """Update chat settings. updates can include: name, picturePath, extra.groupExtra.preventedJoinByTicket, etc."""
+        return self._call("updateChat", [self._next_seq(), {"chatMid": chat_id, **updates}, 0])
+
+    def set_chat_hidden_status(self, chat_id: str, hidden: bool) -> dict:
+        """Archive/unarchive a chat."""
+        return self._call("setChatHiddenStatus", [self._next_seq(), chat_id, hidden])
+
+    def get_rooms(self, room_ids: list[str]) -> dict:
+        """Get legacy room info."""
+        return self._call("getRoomsV2", [room_ids])
+
+    def invite_into_room(self, room_id: str, mids: list[str]) -> dict:
+        """Invite users into a legacy room."""
+        return self._call("inviteIntoRoom", [self._next_seq(), room_id, mids])
+
+    def leave_room(self, room_id: str) -> dict:
+        return self._call("leaveRoom", [self._next_seq(), room_id])
+
     # ── Reactions ──
 
     def react(self, message_id: str, reaction_type: int) -> dict:
         """React to a message. Types: 2=like, 3=love, 4=laugh, 5=surprised, 6=sad, 7=angry"""
         return self._call("react", [self._next_seq(), {"messageId": int(message_id), "reactionType": {"type": reaction_type}}])
+
+    def cancel_reaction(self, message_id: str) -> dict:
+        """Remove a reaction from a message."""
+        return self._call("cancelReaction", [self._next_seq(), {"messageId": int(message_id), "reactionType": {"type": 0}}])
+
+    # ── Profile & Settings ──
+
+    def update_profile_attributes(self, attrs: dict) -> dict:
+        """Update profile. attrs keys: displayName, statusMessage, pictureStatus, etc."""
+        # attr_bitset indicates which fields to update
+        return self._call("updateProfileAttributes", [self._next_seq(), attrs])
+
+    def get_settings(self) -> dict:
+        return self._call("getSettings")
+
+    def get_settings_attributes(self, attr_bitset: int) -> dict:
+        return self._call("getSettingsAttributes2", [attr_bitset])
+
+    def update_settings_attributes(self, attr_bitset: int, settings: dict) -> dict:
+        return self._call("updateSettingsAttributes2", [self._next_seq(), attr_bitset, settings])
+
+    # ── Other Services ──
+
+    def get_server_time(self) -> int:
+        return self._call("getServerTime")
+
+    def get_configurations(self) -> dict:
+        return self._call("getConfigurations")
+
+    def get_rsa_key_info(self) -> dict:
+        return self._call("getRSAKeyInfo", [0])
+
+    def report_abuse(self, mid: str, category: int = 0, reason: str = "") -> dict:
+        return self._call("reportAbuseEx", [self._next_seq(), {"reportee": mid, "category": category, "reason": reason}])
+
+    def issue_channel_token(self, channel_id: str) -> dict:
+        """Issue a channel token (for LINE Login/LIFF)."""
+        path = "/api/talk/thrift/Talk/ChannelService/issueChannelToken"
+        url = BASE_URL + path
+        body = json.dumps([channel_id])
+        headers = {**self._headers, "X-Hmac": self._sign_request(path, body)}
+        resp = self._session.post(url, data=body, headers=headers, timeout=30)
+        resp.raise_for_status()
+        return resp.json().get("data")
+
+    def get_buddy_detail(self, mid: str) -> dict:
+        """Get official account / buddy detail."""
+        path = "/api/talk/thrift/Talk/BuddyService/getBuddyDetail"
+        url = BASE_URL + path
+        body = json.dumps([mid])
+        headers = {**self._headers, "X-Hmac": self._sign_request(path, body)}
+        resp = self._session.post(url, data=body, headers=headers, timeout=30)
+        resp.raise_for_status()
+        return resp.json().get("data")
+
+    def add_friend_by_mid(self, mid: str) -> dict:
+        """Add friend via RelationService."""
+        path = "/api/talk/thrift/Talk/RelationService/addFriendByMid"
+        url = BASE_URL + path
+        body = json.dumps([self._next_seq(), mid])
+        headers = {**self._headers, "X-Hmac": self._sign_request(path, body)}
+        resp = self._session.post(url, data=body, headers=headers, timeout=30)
+        resp.raise_for_status()
+        return resp.json().get("data")
+
+    def logout(self) -> dict:
+        """Logout and invalidate the current token."""
+        path = "/api/talk/thrift/Talk/AuthService/logoutV2"
+        url = BASE_URL + path
+        body = json.dumps([])
+        headers = {**self._headers, "X-Hmac": self._sign_request(path, body)}
+        resp = self._session.post(url, data=body, headers=headers, timeout=30)
+        resp.raise_for_status()
+        return resp.json().get("data")
 
     # ── Polling ──
 
