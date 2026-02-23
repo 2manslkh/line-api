@@ -53,12 +53,14 @@ def get_signer():
         return HmacSigner(mode="subprocess")
 
 
-def post_json(signer, path, data, token=""):
+def post_json(signer, path, data, token="", extra_headers=None, timeout=10):
     body = json.dumps(data)
     headers = {**HEADERS, "X-Hmac": signer.sign(token, path, body)}
     if token:
         headers["x-line-access"] = token
-    return requests.post(BASE + path, data=body, headers=headers, timeout=10)
+    if extra_headers:
+        headers.update(extra_headers)
+    return requests.post(BASE + path, data=body, headers=headers, timeout=timeout)
 
 
 def make_thrift(method, session_id):
@@ -148,13 +150,26 @@ def main():
         print(f"\n{'=' * 50}")
         print("Waiting for scan (2 min timeout)...\n")
 
-        # Poll for scan — 8 rounds * 15s = 2 min
+        # Poll for scan via Chrome GW (same as extension does)
+        poll_path = "/api/talk/thrift/LoginQrCode/SecondaryQrCodeLoginPermitNoticeService/checkQrCodeVerified"
         for i in range(8):
             try:
-                r = thrift_long_poll("checkQrCodeVerified", session_id, timeout=15)
-                if r.status_code == 200:
+                r = post_json(signer, poll_path,
+                              [{"authSessionId": session_id}],
+                              token=session_id,
+                              extra_headers={"x-lst": "150000"},
+                              timeout=20)
+                resp = r.json()
+                print(f"\n  Poll response: {json.dumps(resp)[:200]}")
+                if resp.get("code") == 0:
                     scanned = True
                     break
+                elif resp.get("code") == 10052:
+                    # HTTP error from backend - might be timeout, retry
+                    sys.stdout.write(".")
+                    sys.stdout.flush()
+                else:
+                    print(f"\n  Unexpected: {resp}")
             except requests.exceptions.ReadTimeout:
                 sys.stdout.write(".")
                 sys.stdout.flush()
@@ -198,11 +213,17 @@ def main():
         print(f"  Enter this PIN on your phone:  {pin}")
         print(f"{'=' * 50}\n")
 
-        # Wait for PIN verification
+        # Wait for PIN verification via Chrome GW
+        pin_poll_path = "/api/talk/thrift/LoginQrCode/SecondaryQrCodeLoginPermitNoticeService/checkPinCodeVerified"
         for i in range(30):
             try:
-                r = thrift_long_poll("checkPinCodeVerified", session_id, timeout=15)
-                if r.status_code == 200:
+                r = post_json(signer, pin_poll_path,
+                              [{"authSessionId": session_id}],
+                              token=session_id,
+                              extra_headers={"x-lst": "150000"},
+                              timeout=20)
+                resp = r.json()
+                if resp.get("code") == 0:
                     break
             except requests.exceptions.ReadTimeout:
                 sys.stdout.write(".")
