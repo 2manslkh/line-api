@@ -14,6 +14,8 @@ Usage:
 """
 
 import json
+import os
+import stat
 import time
 import base64
 import urllib.parse
@@ -191,9 +193,13 @@ class QRLogin:
 
         # Save certificate
         cert_new = data.get("certificate")
+        CACHE_DIR.mkdir(parents=True, exist_ok=True)
+        os.chmod(CACHE_DIR, stat.S_IRWXU)  # 0700
+
         if cert_new:
-            CACHE_DIR.mkdir(parents=True, exist_ok=True)
-            (CACHE_DIR / "sqr_cert").write_text(cert_new)
+            cert_path = CACHE_DIR / "sqr_cert"
+            cert_path.write_text(cert_new)
+            os.chmod(cert_path, stat.S_IRUSR | stat.S_IWUSR)  # 0600
 
         # Save tokens
         result = QRLoginResult(
@@ -204,13 +210,14 @@ class QRLogin:
             metadata=data.get("metaData"),
         )
 
-        CACHE_DIR.mkdir(parents=True, exist_ok=True)
-        (CACHE_DIR / "tokens.json").write_text(json.dumps({
+        token_path = CACHE_DIR / "tokens.json"
+        token_path.write_text(json.dumps({
             "auth_token": result.auth_token,
             "refresh_token": result.refresh_token,
             "mid": result.mid,
             "saved_at": int(time.time()),
         }, indent=2))
+        os.chmod(token_path, stat.S_IRUSR | stat.S_IWUSR)  # 0600
 
         status(f"Logged in! MID: {result.mid}")
         return result
