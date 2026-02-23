@@ -204,7 +204,43 @@ def main():
 
     print("\n✓ QR code scanned!")
 
-    # Chrome extension flow: no PIN needed, go straight to login after scan
+    # After scan: try verifyCertificate, then createPinCode if needed
+    cert_file = CACHE_DIR / "sqr_cert"
+    cert = cert_file.read_text().strip() if cert_file.exists() else None
+
+    if cert:
+        print(f"Trying verifyCertificate with saved cert...")
+        r = post_json(signer, "/api/talk/thrift/LoginQrCode/SecondaryQrCodeLoginService/verifyCertificate",
+                      [{"authSessionId": session_id, "certificate": cert}])
+        resp = r.json()
+        print(f"  verifyCertificate: {json.dumps(resp)[:200]}")
+    else:
+        print("No saved certificate. Creating PIN...")
+        r = post_json(signer, "/api/talk/thrift/LoginQrCode/SecondaryQrCodeLoginService/createPinCode",
+                      [{"authSessionId": session_id}])
+        resp = r.json()
+        print(f"  createPinCode: {json.dumps(resp)}")
+        pin = resp.get("data", {}).get("pinCode")
+        if pin:
+            print(f"\n{'=' * 50}")
+            print(f"  Enter this PIN on your phone:  {pin}")
+            print(f"{'=' * 50}\n")
+            # Wait for PIN verification
+            pin_poll = "/api/talk/thrift/LoginQrCode/SecondaryQrCodeLoginPermitNoticeService/checkPinCodeVerified"
+            for i in range(30):
+                try:
+                    r = post_json(signer, pin_poll,
+                                  [{"authSessionId": session_id}],
+                                  extra_headers={"X-LST":"150000","X-Line-Session-ID":session_id,"Referer":""},
+                                  timeout=20)
+                    if r.json().get("code") == 0:
+                        print("✓ PIN verified!")
+                        break
+                except requests.exceptions.ReadTimeout:
+                    sys.stdout.write(".")
+                    sys.stdout.flush()
+        else:
+            print(f"  ⚠ No PIN returned — trying login anyway")
 
     # Final login
     print("Logging in...")
