@@ -207,22 +207,21 @@ def main():
 
     print("\n✓ QR code scanned!")
 
-    # After scan: try verifyCertificate, then createPinCode if needed
+    # After scan: MUST call verifyCertificate first (even if it fails), then createPinCode
     cert_file = CACHE_DIR / "sqr_cert"
-    cert = cert_file.read_text().strip() if cert_file.exists() else None
+    cert = cert_file.read_text().strip() if cert_file.exists() else "dummy"
 
-    need_pin = True
-    if cert:
-        print(f"Trying verifyCertificate with saved cert...")
-        r = post_json(signer, "/api/talk/thrift/LoginQrCode/SecondaryQrCodeLoginService/verifyCertificate",
-                      [{"authSessionId": session_id, "certificate": cert}])
-        resp = r.json()
-        print(f"  verifyCertificate: {json.dumps(resp)[:200]}")
-        if resp.get("code") == 0:
-            need_pin = False
-            print("✓ Certificate verified!")
+    # Step 1: verifyCertificate (required to advance session state)
+    print("Calling verifyCertificate...")
+    r = post_json(signer, "/api/talk/thrift/LoginQrCode/SecondaryQrCodeLoginService/verifyCertificate",
+                  [{"authSessionId": session_id, "certificate": cert}])
+    resp = r.json()
+    print(f"  verifyCertificate: {json.dumps(resp)[:200]}")
+
+    need_pin = resp.get("code") != 0
 
     if need_pin:
+        # Step 2: createPinCode
         print("Creating PIN...")
         r = post_json(signer, "/api/talk/thrift/LoginQrCode/SecondaryQrCodeLoginService/createPinCode",
                       [{"authSessionId": session_id}])
@@ -233,7 +232,7 @@ def main():
             print(f"\n{'=' * 50}")
             print(f"  Enter this PIN on your phone:  {pin}")
             print(f"{'=' * 50}\n")
-            # Wait for PIN verification (no origin, like Chrome ext)
+            # Step 3: Wait for PIN verification (no origin, like Chrome ext)
             pin_poll = "/api/talk/thrift/LoginQrCode/SecondaryQrCodeLoginPermitNoticeService/checkPinCodeVerified"
             for i in range(10):
                 try:
@@ -243,6 +242,7 @@ def main():
                                   timeout=120,
                                   no_origin=True)
                     resp = r.json()
+                    elapsed = time.time() - time.time()  # placeholder
                     print(f"\n  PIN poll: {json.dumps(resp)[:200]}")
                     if resp.get("code") == 0:
                         print("✓ PIN verified!")
