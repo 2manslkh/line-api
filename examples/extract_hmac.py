@@ -2,52 +2,59 @@
 """
 Extract HMAC implementation from LINE Chrome extension.
 Run from the extension directory.
+
+Output is kept compact: 150 chars before match, 400 after, 2 matches max per pattern.
+Deduplicates overlapping regions. Total output typically <50KB.
 """
 
 import re
 import os
+import sys
 
-def extract(content, pattern, before=300, after=800, max_matches=5):
-    results = []
-    for m in re.finditer(pattern, content):
-        start = max(0, m.start() - before)
-        end = min(len(content), m.end() + after)
-        results.append((m.start(), content[start:end]))
-        if len(results) >= max_matches:
-            break
-    return results
+BEFORE = 150
+AFTER = 400
+MAX_PER_PATTERN = 2
+
+SEARCHES = [
+    ("GET_HMAC handler",        r'GET_HMAC'),
+    ("hmac compute/sign",       r'async[^{]{0,60}hmac|computeHmac|calcHmac|generateHmac'),
+    ("HMAC SHA256",             r'HMAC.*SHA-256|SHA-256.*HMAC'),
+    ("importKey HMAC",          r'importKey\([^)]*"HMAC"'),
+    ("subtle.sign",             r'subtle\.sign\('),
+    ("command switch/case",     r'case\s+\d+\s*:.*(?:HMAC|hmac|GET_HMAC)'),
+    ("onmessage handler",       r'onmessage\s*=|addEventListener\(\s*["\']message'),
+    ("token+path+body",         r'accessToken.{0,80}path.{0,80}body|path.{0,80}body.{0,80}accessToken'),
+]
+
 
 def main():
-    target = "static/js/ltsmSandbox.js"
+    target = sys.argv[1] if len(sys.argv) > 1 else "static/js/ltsmSandbox.js"
     if not os.path.exists(target):
-        print(f"File not found: {target}")
-        print(f"Current dir: {os.getcwd()}")
+        print(f"File not found: {target}\nCwd: {os.getcwd()}")
         return
 
     content = open(target, encoding='utf-8', errors='ignore').read()
-    print(f"File size: {len(content)} bytes\n")
+    print(f"# {target} — {len(content):,} bytes\n")
 
-    searches = [
-        ("GET_HMAC handler", r'GET_HMAC'),
-        ("HMAC command enum", r'GET_HMAC|HMAC["\s:,]'),
-        ("hmac compute/sign in sandbox", r'async.*hmac|computeHmac|calcHmac|generateHmac'),
-        ("HMAC SHA256 sign", r'HMAC.*SHA-256|SHA-256.*HMAC'),
-        ("importKey.*HMAC", r'importKey\([^)]*"HMAC"'),  
-        ("crypto.subtle.sign HMAC", r'subtle\.sign\("HMAC"'),
-        ("command handler switch", r'case.*HMAC|GET_HMAC'),
-        ("onmessage handler", r'onmessage|addEventListener.*message'),
-        ("accessToken.*path.*body together", r'accessToken.*path.*body|path.*body.*accessToken'),
-    ]
+    seen = set()  # (start, end) ranges already printed
 
-    for label, pattern in searches:
-        results = extract(content, pattern, before=300, after=800, max_matches=3)
-        if results:
-            for offset, text in results:
-                print(f"{'='*60}")
-                print(f"[{label}] offset {offset}")
-                print(f"{'='*60}")
-                print(text)
-                print()
+    for label, pattern in SEARCHES:
+        matches = list(re.finditer(pattern, content))[:MAX_PER_PATTERN]
+        if not matches:
+            continue
+        print(f"\n## {label} ({len(matches)} hit{'s' if len(matches)>1 else ''})\n")
+        for m in matches:
+            start = max(0, m.start() - BEFORE)
+            end = min(len(content), m.end() + AFTER)
+            # skip if this region largely overlaps a previous one
+            if any(s <= start and end <= e for s, e in seen):
+                continue
+            seen.add((start, end))
+            snippet = content[start:end].replace('\r', '')
+            print(f"--- offset {m.start()} ---")
+            print(snippet)
+            print()
+
 
 if __name__ == "__main__":
     main()
