@@ -13,7 +13,7 @@ import sys
 
 BEFORE = 80
 AFTER = 200
-MAX_PER_PATTERN = 1
+MAX_PER_PATTERN = 2
 
 SEARCHES = [
     ("GET_HMAC handler",        r'GET_HMAC'),
