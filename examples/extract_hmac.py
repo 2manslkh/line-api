@@ -36,6 +36,11 @@ SEARCHES = [
     (".wasm reference",         r'\.wasm'),
     ("WebAssembly",             r'WebAssembly\.(?:instantiate|compile|Module)'),
     ("origin token map",        r'chrome-extension://[^"]{20,60}"\s*:\s*"[^"]+'),
+    # Emscripten glue / Q() function
+    ("Q function def",          r'(?:function\s+Q|Q\s*=\s*(?:async\s*)?\(?(?:function|\())[^;]{0,80}'),
+    ("embind register",         r'registerClass|register_class|__embind'),
+    ("Module export",           r'Module\[.[A-Z]'),
+    ("lstm wasm fetch",         r'lstm|ltsm.*(?:fetch|load|binary|wasm)'),
 ]
 
 
