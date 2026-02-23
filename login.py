@@ -190,54 +190,7 @@ def main():
 
     print("\n✓ QR code scanned!")
 
-    # Check for saved certificate (skips PIN on repeat logins)
-    cert = None
-    cert_file = CACHE_DIR / "sqr_cert"
-    if cert_file.exists():
-        cert = cert_file.read_text().strip()
-
-    need_pin = True
-    if cert:
-        try:
-            post_json(signer, "/api/talk/thrift/LoginQrCode/SecondaryQrCodeLoginService/verifyCertificate",
-                      [{"authSessionId": session_id, "certificate": cert}])
-            need_pin = False
-            print("✓ Certificate verified (no PIN needed)")
-        except Exception:
-            pass
-
-    if need_pin:
-        r = post_json(signer, "/api/talk/thrift/LoginQrCode/SecondaryQrCodeLoginService/createPinCode",
-                      [{"authSessionId": session_id}])
-        pin_resp = r.json()
-        print(f"  createPinCode response: {json.dumps(pin_resp)}")
-        pin = pin_resp.get("data", {}).get("pinCode") or pin_resp.get("data", {}).get("pin")
-
-        print(f"\n{'=' * 50}")
-        print(f"  Enter this PIN on your phone:  {pin}")
-        print(f"{'=' * 50}\n")
-
-        # Wait for PIN verification via Chrome GW
-        pin_poll_path = "/api/talk/thrift/LoginQrCode/SecondaryQrCodeLoginPermitNoticeService/checkPinCodeVerified"
-        for i in range(30):
-            try:
-                r = post_json(signer, pin_poll_path,
-                              [{"authSessionId": session_id}],
-                              extra_headers={
-                                  "X-LST": "150000",
-                                  "X-Line-Session-ID": session_id,
-                                  "Referer": "",
-                              },
-                              timeout=20)
-                resp = r.json()
-                if resp.get("code") == 0:
-                    break
-            except requests.exceptions.ReadTimeout:
-                sys.stdout.write(".")
-                sys.stdout.flush()
-                continue
-
-        print("\n✓ PIN verified!")
+    # Chrome extension flow: no PIN needed, go straight to login after scan
 
     # Final login
     print("Logging in...")
