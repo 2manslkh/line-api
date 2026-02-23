@@ -209,7 +209,9 @@ def main():
     if need_pin:
         r = post_json(signer, "/api/talk/thrift/LoginQrCode/SecondaryQrCodeLoginService/createPinCode",
                       [{"authSessionId": session_id}])
-        pin = r.json().get("data", {}).get("pinCode")
+        pin_resp = r.json()
+        print(f"  createPinCode response: {json.dumps(pin_resp)}")
+        pin = pin_resp.get("data", {}).get("pinCode") or pin_resp.get("data", {}).get("pin")
 
         print(f"\n{'=' * 50}")
         print(f"  Enter this PIN on your phone:  {pin}")
