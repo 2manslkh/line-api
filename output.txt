@@ -1,3 +1,0 @@
-No JS files found! Make sure you're in the extension directory.
-Current dir: /Users/kenk/Desktop/coding-projects/line-api
-Files here: ['requirements.txt', '.claude', 'results.txt', 'README.md', 'setup.py', '.gitignore', 'examples', '.git', 'output.txt', 'src']

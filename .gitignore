@@ -6,3 +6,21 @@ dist/
 build/
 chrline-reference/
 .line-client/
+
+# Debug/analysis output
+output.txt
+hmac_output.txt
+hmac2.txt
+results.txt
+
+# Session/token files (should never be committed)
+line_session.json
+line_pin.txt
+session.json
+tokens.json
+
+# Large binary artifacts (extract from Chrome extension locally)
+# lstm.wasm
+# lstmSandbox.js
+lstm.wat
+login_thrift.py

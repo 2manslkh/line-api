@@ -14,6 +14,9 @@ const path = require('path');
 const crypto = require('crypto');
 const http = require('http');
 
+// Static token from the public Chrome extension (not a personal secret).
+// This is embedded in the published extension and used by all Chrome extension users.
+// Origin: chrome-extension://ophjlpahpchlmihnnnihgmmeilfjmjjc
 const CHROME_TOKEN = "YOUR_CHROME_TOKEN_HERE";
 const VERSION = "3.7.1";
 
