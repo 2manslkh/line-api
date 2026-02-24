@@ -1,6 +1,8 @@
 """Token management — storage, refresh, validation."""
 
 import json
+import os
+import stat
 from pathlib import Path
 from ..transport.http import LineTransport
 from ..config import LineConfig
@@ -15,10 +17,13 @@ class TokenManager:
 
     def save_token(self, auth_token: str, refresh_token: str | None = None):
         CACHE_DIR.mkdir(parents=True, exist_ok=True)
+        os.chmod(CACHE_DIR, stat.S_IRWXU)  # 0700
         data = {"auth_token": auth_token}
         if refresh_token:
             data["refresh_token"] = refresh_token
-        (CACHE_DIR / "session.json").write_text(json.dumps(data))
+        path = CACHE_DIR / "session.json"
+        path.write_text(json.dumps(data))
+        os.chmod(path, stat.S_IRUSR | stat.S_IWUSR)  # 0600
 
     def load_token(self) -> dict | None:
         path = CACHE_DIR / "session.json"
