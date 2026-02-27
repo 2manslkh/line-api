@@ -63,10 +63,28 @@ def post_json(signer, path, data, token="", extra_headers=None, timeout=10, no_o
 def display_qr(url):
     try:
         import qrcode
+        from PIL import Image
         qr = qrcode.QRCode(box_size=1, border=1)
         qr.add_data(url)
         qr.make(fit=True)
         qr.print_ascii(invert=True)
+        
+        # Also save as PNG
+        qr_img = qrcode.QRCode(
+            version=1,
+            error_correction=qrcode.constants.ERROR_CORRECT_L,
+            box_size=10,
+            border=4,
+        )
+        qr_img.add_data(url)
+        qr_img.make(fit=True)
+        img = qr_img.make_image(fill_color='black', back_color='white')
+        img.save('/data/workspace/line_qr_fresh.png')
+        
+        # Also create a status file to indicate QR is ready
+        with open('/data/workspace/line_status.txt', 'w') as f:
+            f.write('QR_READY')
+            
     except ImportError:
         print(f"\nQR URL: {url}")
         print("(pip install qrcode for terminal QR display)\n")

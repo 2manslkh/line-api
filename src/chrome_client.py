@@ -164,15 +164,25 @@ class LineChromeClient:
         content_metadata: dict | None = None,
         reply_to: str | None = None,
     ) -> dict:
-        """Send a text message."""
+        """
+        Send a text message.
+
+        NOTE: This uses the JSON object format which works for non-E2EE chats.
+        For E2EE-enabled chats (groups with e2eeVersion=2 in contentMetadata),
+        messages must be encrypted before sending — see src/e2ee/crypto.py.
+        Sending to E2EE chats without encryption will return error code 82
+        ("types mismatch").
+
+        To check if a chat uses E2EE, call get_recent_messages() and check
+        if messages have 'chunks' field or contentMetadata.e2eeVersion == "2".
+        """
         seq = self._next_seq()
         message = {
             "from": self.mid,
             "to": to,
             "toType": self._get_to_type(to),
             "id": f"local-{seq}",
-            "createdTime": str(int(time.time() * 1000)),
-            "sessionId": 0,
+            "createdTime": int(time.time() * 1000),
             "text": text,
             "contentType": content_type,
             "contentMetadata": content_metadata or {},
@@ -183,6 +193,21 @@ class LineChromeClient:
             message["messageRelationType"] = 3  # REPLY
             message["relatedMessageServiceCode"] = 1
         return self._call("sendMessage", [seq, message])
+
+    def is_e2ee_chat(self, chat_id: str) -> bool:
+        """Check if a chat has E2EE enabled by inspecting recent messages."""
+        try:
+            msgs = self.get_recent_messages(chat_id, count=1)
+            if msgs and isinstance(msgs, list) and len(msgs) > 0:
+                msg = msgs[0]
+                if msg.get("chunks"):
+                    return True
+                meta = msg.get("contentMetadata", {})
+                if meta.get("e2eeVersion") == "2":
+                    return True
+        except Exception:
+            pass
+        return False
 
     def unsend_message(self, message_id: str) -> dict:
         return self._call("unsendMessage", [self._next_seq(), message_id])

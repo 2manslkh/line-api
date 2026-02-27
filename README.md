@@ -27,7 +27,13 @@ from src.chrome_client import LineChromeClient
 tokens = json.loads((Path.home() / ".line-client" / "tokens.json").read_text())
 client = LineChromeClient(auth_token=tokens["auth_token"])
 
-# Send a message
+# Check if chat has E2EE before sending
+if client.is_e2ee_chat("C..."):
+    print("⚠️  E2EE chat — send_message won't work, see E2EE section below")
+else:
+    client.send_message("C...", "Hello!")
+
+# Send a message (non-E2EE chats only)
 client.send_message("U...", "Hello!")
 
 # Get profile
@@ -35,6 +41,19 @@ profile = client.get_profile()
 ```
 
 Tokens expire in ~7 days. If expired (`APIError(10051)`), re-run QR login.
+
+## ⚠️ E2EE Limitation
+
+**Groups with E2EE v2 enabled cannot receive messages via `send_message()`.**
+
+- Error: code 82 "types mismatch" when sending to E2EE chats
+- Messages in E2EE chats appear with `chunks` field (encrypted) instead of plaintext `text`
+- Use `client.is_e2ee_chat(chat_id)` to check before sending
+- E2EE encryption module exists in `src/e2ee/crypto.py` but is NOT wired into `send_message` yet
+- **Reading** messages from E2EE chats works (returns encrypted chunks)
+- **Sending** requires encrypting with each member's Curve25519 public key — not yet implemented
+
+**Workaround:** For E2EE groups, use the LINE Official Account API or have the user send manually.
 
 ## QR Login (Authentication)
 
@@ -71,6 +90,69 @@ result = login.run(
 python scripts/qr_login_server.py /tmp/qr.png
 ```
 Emits JSON events on stdout: `{"event": "qr", "path": "...", "url": "..."}`, `{"event": "pin", "pin": "123456"}`, `{"event": "done", "mid": "U..."}`.
+
+### Standalone Login (Recommended for Agents)
+
+Best for automation — writes QR/PIN/status to files for fast pickup:
+
+```bash
+# 1. Start HMAC signer
+cd /path/to/line-client && node src/hmac/signer.js serve &
+
+# 2. Run login (background)
+python3 scripts/qr_login_standalone.py &
+
+# 3. Watch for QR (send to user via messaging)
+# File: /data/workspace/line_qr.png
+
+# 4. Watch for PIN (relay to user IMMEDIATELY — 60s window!)
+# File: /data/workspace/line_pin.txt
+
+# 5. Check completion
+# File: /data/workspace/line_done.txt → "OK:<mid>" or "FAILED"
+```
+
+**Agent orchestration pattern:**
+```bash
+# Start login in background
+nohup python3 scripts/qr_login_standalone.py > /tmp/line_login.log 2>&1 &
+
+# Poll for QR ready
+while [ ! -f /data/workspace/line_status.txt ] || ! grep -q QR_READY /data/workspace/line_status.txt; do
+  sleep 0.5
+done
+# → Send /data/workspace/line_qr.png to user
+
+# Poll for PIN (fast — check every 0.2s)
+while [ ! -f /data/workspace/line_pin.txt ]; do
+  sleep 0.2
+done
+PIN=$(cat /data/workspace/line_pin.txt)
+# → Send PIN to user IMMEDIATELY
+
+# Poll for completion
+while [ ! -f /data/workspace/line_done.txt ]; do
+  sleep 1
+done
+# → Check result
+```
+
+**Critical learnings:**
+- Always clear `~/.line-client/sqr_cert` before login to force PIN prompt
+- PIN window is ~60 seconds — relay speed is everything
+- The standalone script clears cert automatically
+- If running from a subagent, the subagent tool-call latency can eat the PIN window
+- Best approach: poll PIN file from main thread with minimal sleep interval
+
+### Dependencies
+
+```bash
+# Debian/Ubuntu (no pip needed)
+apt-get install -y python3-requests python3-qrcode python3-pil python3-nacl python3-cryptography python3-httpx python3-rsa python3-pycryptodome
+
+# Also need Crypto alias if pycryptodome installs as Cryptodome
+ln -sf /usr/lib/python3/dist-packages/Cryptodome /usr/lib/python3/dist-packages/Crypto
+```
 
 ## All API Methods
 

@@ -1,3 +1,2 @@
-from .qr import QRLogin
-from .email import EmailLogin
+from .qr_login import QRLogin
 from .token import TokenManager
