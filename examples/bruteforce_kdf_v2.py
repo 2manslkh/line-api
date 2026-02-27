@@ -9,7 +9,7 @@ import base64
 import itertools
 
 # Static secrets
-CHROME_TOKEN = "YOUR_CHROME_TOKEN_HERE"
+CHROME_TOKEN = "wODdrvWqmdP4Zliay-iF3cz3KZcK0ekrial868apg06TXeCo7A1hIQO0ESElHg6D"
 VERSION = "3.7.1"
 
 ACCESS_TOKEN = "YOUR_LINE_ACCESS_TOKEN_HERE"

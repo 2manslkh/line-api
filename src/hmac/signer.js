@@ -17,7 +17,7 @@ const http = require('http');
 // Static token from the public Chrome extension (not a personal secret).
 // This is embedded in the published extension and used by all Chrome extension users.
 // Origin: chrome-extension://ophjlpahpchlmihnnnihgmmeilfjmjjc
-const CHROME_TOKEN = "YOUR_CHROME_TOKEN_HERE";
+const CHROME_TOKEN = "wODdrvWqmdP4Zliay-iF3cz3KZcK0ekrial868apg06TXeCo7A1hIQO0ESElHg6D";
 const VERSION = "3.7.1";
 
 function sha256(data) {

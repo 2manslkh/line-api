@@ -6,7 +6,7 @@ const fs = require('fs');
 const pathMod = require('path');
 const crypto = require('crypto');
 
-const CHROME_TOKEN = "YOUR_CHROME_TOKEN_HERE";
+const CHROME_TOKEN = "wODdrvWqmdP4Zliay-iF3cz3KZcK0ekrial868apg06TXeCo7A1hIQO0ESElHg6D";
 const VERSION = "3.7.1";
 
 function sha256(data) {
